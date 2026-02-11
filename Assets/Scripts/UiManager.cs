@@ -6,7 +6,7 @@ using TMPro;
 
 public class UiManager : MonoBehaviour
 {
-    public float health ;
+    public float health;
     public float speed;
     public float score; 
     public float sprint;
@@ -27,24 +27,16 @@ public class UiManager : MonoBehaviour
         // Obtener referencia al AudioManager
         audioManager = FindObjectOfType<AudioManager>();
         
+        // Asignar funciones a los botones
+        damage.onClick.AddListener(DamageButtonPressed);
+        healing.onClick.AddListener(HealingButtonPressed);
+        
         // Actualizar UI inicial
         UpdateUI();
     }
     
     void Update()
     {
-        // Detectar botón izquierdo del mouse
-        if (Input.GetMouseButtonDown(0))
-        {
-            LeftMouseButtonPressed();
-        }
-        
-        // Detectar botón derecho del mouse
-        if (Input.GetMouseButtonDown(1))
-        {
-            RightMouseButtonPressed();
-        }
-        
         // Detectar tecla espacio
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -52,11 +44,10 @@ public class UiManager : MonoBehaviour
         }
     }
     
-    // Botón izquierdo del mouse
-    public void LeftMouseButtonPressed()
+    // Botón Damage presionado
+    public void DamageButtonPressed()
     {
         health -= 5;
-        score -= 100;
         
         // Cambiar color del botón Damage a rojo
         ColorBlock colors = damage.colors;
@@ -72,8 +63,8 @@ public class UiManager : MonoBehaviour
         UpdateUI();
     }
     
-    // Botón derecho del mouse
-    public void RightMouseButtonPressed()
+    // Botón Healing presionado
+    public void HealingButtonPressed()
     {
         health += 5;
         score += 100;
