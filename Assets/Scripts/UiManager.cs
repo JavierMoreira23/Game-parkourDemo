@@ -1,119 +1,111 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using TMPro;
 
-public class UiManager : MonoBehaviour
+public class UIManager : MonoBehaviour
 {
-    public float health;
-    public float speed;
-    public float score; 
-    public float sprint;
-    
-    public TextMeshProUGUI healthText;
-    public TextMeshProUGUI speedText;
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI sprintText;
-    
-    public Button damage;
-    public Button healing;
-    public Button spacePressed;
-    
-    private AudioManager audioManager;
+    [Header("Referencias a Sistemas")]
+    [SerializeField] private HealthSystem healthSystem;
+    [SerializeField] private ScoreSystem scoreSystem;
 
-    void Start()
+    [Header("UI Panels")]
+    public GameObject initialPanel;
+    public GameObject gamePanel;
+    public GameObject gameOverPanel;
+
+    [Header("Game UI - Textos")]
+    public TextMeshProUGUI healthText;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI finalScoreText;
+
+    [Header("Buttons")]
+    public Button startButton;
+    public Button restartButton;
+
+    private float health;
+    private int score;
+
+    private void Awake()
     {
-        // Obtener referencia al AudioManager
-        audioManager = FindObjectOfType<AudioManager>();
-        
-        // Asignar funciones a los botones
-        damage.onClick.AddListener(DamageButtonPressed);
-        healing.onClick.AddListener(HealingButtonPressed);
-        
-        // Actualizar UI inicial
-        UpdateUI();
+        ShowInitialUI();
     }
-    
-    void Update()
+
+    private void Start()
     {
-        // Detectar tecla espacio
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (healthSystem != null)
         {
-            SpaceKeyPressed();
+            healthSystem.OnHealthChanged.AddListener(UpdateHealth);
+
+            // 🔥 FORZAR actualización inicial
+            UpdateHealth(healthSystem.GetHealthPercentage());
         }
+
+        if (scoreSystem != null)
+        {
+            scoreSystem.OnScoreChanged.AddListener(UpdateScore);
+
+            // 🔥 FORZAR actualización inicial
+            UpdateScore(scoreSystem.GetCurrentScore());
+        }
+
+        if (startButton != null)
+            startButton.onClick.AddListener(OnStartButtonClicked);
+
+        if (restartButton != null)
+            restartButton.onClick.AddListener(OnRestartButtonClicked);
     }
-    
-    // Botón Damage presionado
-    public void DamageButtonPressed()
+
+    public void ShowInitialUI()
     {
-        health -= 5;
-        
-        // Cambiar color del botón Damage a rojo
-        ColorBlock colors = damage.colors;
-        colors.normalColor = Color.red;
-        damage.colors = colors;
-        
-        // Reproducir sonido de hurt/damage
-        if (audioManager != null)
-        {
-            audioManager.PlayDamageSound();
-        }
-        
-        UpdateUI();
+        initialPanel?.SetActive(true);
+        gamePanel?.SetActive(false);
+        gameOverPanel?.SetActive(false);
     }
-    
-    // Botón Healing presionado
-    public void HealingButtonPressed()
+
+    public void ShowGameUI()
     {
-        health += 5;
-        score += 100;
-        
-        // Cambiar color del botón Healing a verde
-        ColorBlock colors = healing.colors;
-        colors.normalColor = Color.green;
-        healing.colors = colors;
-        
-        // Reproducir sonido de coin
-        if (audioManager != null)
-        {
-            audioManager.PlayCoinSound();
-        }
-        
-        UpdateUI();
+        initialPanel?.SetActive(false);
+        gamePanel?.SetActive(true);
+        gameOverPanel?.SetActive(false);
     }
-    
-    // Tecla espacio
-    public void SpaceKeyPressed()
+
+    public void ShowGameOverUI()
     {
-        speed += 1;
-        
-        // Si speed es múltiplo de 5, asignar a sprint
-        if (speed % 5 == 0)
-        {
-            sprint = speed;
-        }
-        
-        // Cambiar color del botón Space Pressed a azul
-        ColorBlock colors = spacePressed.colors;
-        colors.normalColor = Color.blue;
-        spacePressed.colors = colors;
-        
-        // Reproducir sonido de step
-        if (audioManager != null)
-        {
-            audioManager.PlayStepSound();
-        }
-        
-        UpdateUI();
+        initialPanel?.SetActive(false);
+        gamePanel?.SetActive(false);
+        gameOverPanel?.SetActive(true);
+
+        if (finalScoreText != null)
+            finalScoreText.text = "Final Score: " + score.ToString();
     }
-    
-    // Actualizar todos los textos de la UI
-    void UpdateUI()
+
+    private void UpdateHealth(float healthPercentage)
     {
-        healthText.text = "Health: " + health.ToString();
-        speedText.text = "Speed: " + speed.ToString();
-        scoreText.text = "Score: " + score.ToString();
-        sprintText.text = "Sprint: " + sprint.ToString();
+        health = healthPercentage * 100f;
+
+        if (healthText != null)
+            healthText.text = "Health: " + health.ToString("F0") + "%";
+    }
+
+    private void UpdateScore(int newScore)
+    {
+        score = newScore;
+
+        if (scoreText != null)
+            scoreText.text = "Score: " + score.ToString();
+    }
+
+    private void OnStartButtonClicked()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+    }
+
+    private void OnRestartButtonClicked()
+    {
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+        );
     }
 }
